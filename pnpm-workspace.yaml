@@ -1,4 +1,10 @@
 allowBuilds:
   '@parcel/watcher': true
+  '@prisma/engines': true
   '@scarf/scarf': false
+  esbuild: true
+  onnxruntime-node: true
+  prisma: true
+  protobufjs: false
   unrs-resolver: true
+  workerd: false

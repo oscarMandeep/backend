@@ -1,0 +1,347 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ── Enums ─────────────────────────────────────────────
+
+enum Mode {
+  ONLINE
+  IN_PERSON
+  BOTH
+}
+enum Priority {
+  HIGH
+  MEDIUM
+  LOW
+}
+enum SwipeAction {
+  LIKE
+  PASS
+  SUPER
+}
+enum MatchType {
+  SWAP
+  CREDIT
+  CHAIN
+}
+enum MatchStatus {
+  ACTIVE
+  ARCHIVED
+  BLOCKED
+}
+enum SessionStatus {
+  PROPOSED
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+enum ChainStatus {
+  PROPOSED
+  ACCEPTED
+  REJECTED
+  EXPIRED
+}
+
+// ── Users & auth ──────────────────────────────────────
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  username     String   @unique
+  name         String
+  avatarUrl    String?  @map("avatar_url")
+  bio          String?
+  city         String?
+  lat          Float?
+  lng          Float?
+  mode         Mode     @default(BOTH)
+  languages    String[]
+  timezone     String   @default("Asia/Kolkata")
+  googleId     String?  @unique @map("google_id")
+  verified     Boolean  @default(false)
+  ratingAvg    Float    @default(0) @map("rating_avg")
+  ratingCount  Int      @default(0) @map("rating_count")
+  sessionsDone Int      @default(0) @map("sessions_done")
+  noShowCount  Int      @default(0) @map("no_show_count")
+  credits      Int      @default(2)
+  isPublic     Boolean  @default(true) @map("is_public")
+  onboarded    Boolean  @default(false)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  refreshTokens RefreshToken[]
+  haves         UserSkillHave[]
+  wants         UserSkillWant[]
+  slots         AvailabilitySlot[]
+  swipesMade    Swipe[]       @relation("Swiper")
+  swipesGot     Swipe[]       @relation("Swiped")
+  matchesA      Match[]       @relation("UserA")
+  matchesB      Match[]       @relation("UserB")
+  messages      Message[]
+  teaching      Session[]     @relation("Teacher")
+  learning      Session[]     @relation("Learner")
+  reviewsGiven  Review[]      @relation("Reviewer")
+  reviewsGot    Review[]      @relation("Reviewee")
+  ledger        CreditTx[]
+  chainMembers  ChainMember[]
+  blocksMade    Block[]       @relation("Blocker")
+  blocksGot     Block[]       @relation("Blocked")
+  reportsMade   Report[]      @relation("Reporter")
+  reportsGot    Report[]      @relation("Reported")
+
+  @@index([city])
+  @@index([languages], type: Gin, map: "users_languages_idx")
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String    @id @default(cuid())
+  userId    String    @map("user_id")
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model AvailabilitySlot {
+  id        String @id @default(cuid())
+  userId    String @map("user_id")
+  dayOfWeek Int    @map("day_of_week") // 0 = Sun ... 6 = Sat
+  startMin  Int    @map("start_min")   // minutes from midnight
+  endMin    Int    @map("end_min")
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, dayOfWeek])
+  @@map("availability_slots")
+}
+
+// ── Skills ────────────────────────────────────────────
+
+model Skill {
+  id          String                       @id @default(cuid())
+  name        String                       @unique
+  slug        String                       @unique
+  category    String
+  description String?
+  aliases     String[]
+  embedding   Unsupported("vector(384)")?
+  createdAt   DateTime                     @default(now()) @map("created_at")
+  updatedAt   DateTime                     @updatedAt @map("updated_at")
+
+  haves         UserSkillHave[]
+  wants         UserSkillWant[]
+  sessions      Session[]
+  chainTeaching ChainMember[]
+
+  @@index([name(ops: raw("gin_trgm_ops"))], type: Gin, map: "skills_name_trgm_idx")
+  @@index([embedding], map: "skills_embedding_idx")
+  @@map("skills")
+}
+
+model UserSkillHave {
+  id       String  @id @default(cuid())
+  userId   String  @map("user_id")
+  skillId  String  @map("skill_id")
+  level    Int     // 1-5
+  years    Float?
+  proofUrl String? @map("proof_url")
+  verified Boolean @default(false)
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skill    Skill   @relation(fields: [skillId], references: [id])
+
+  @@unique([userId, skillId])
+  @@index([skillId, level])
+  @@map("user_skill_haves")
+}
+
+model UserSkillWant {
+  id           String   @id @default(cuid())
+  userId       String   @map("user_id")
+  skillId      String   @map("skill_id")
+  currentLevel Int      @default(1) @map("current_level")
+  goalLevel    Int      @default(3) @map("goal_level")
+  priority     Priority @default(MEDIUM)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skill        Skill    @relation(fields: [skillId], references: [id])
+
+  @@unique([userId, skillId])
+  @@index([skillId])
+  @@map("user_skill_wants")
+}
+
+// ── Matching ──────────────────────────────────────────
+
+model Swipe {
+  id        String      @id @default(cuid())
+  swiperId  String      @map("swiper_id")
+  swipedId  String      @map("swiped_id")
+  action    SwipeAction
+  score     Int
+  createdAt DateTime    @default(now()) @map("created_at")
+  swiper    User        @relation("Swiper", fields: [swiperId], references: [id], onDelete: Cascade)
+  swiped    User        @relation("Swiped", fields: [swipedId], references: [id], onDelete: Cascade)
+
+  @@unique([swiperId, swipedId])
+  @@index([swipedId, action])
+  @@map("swipes")
+}
+
+model Match {
+  id        String      @id @default(cuid())
+  userAId   String      @map("user_a_id") // always the smaller id
+  userBId   String      @map("user_b_id")
+  type      MatchType
+  score     Int
+  breakdown Json
+  status    MatchStatus @default(ACTIVE)
+  lastMsgAt DateTime?   @map("last_msg_at")
+  createdAt DateTime    @default(now()) @map("created_at")
+  userA     User        @relation("UserA", fields: [userAId], references: [id], onDelete: Cascade)
+  userB     User        @relation("UserB", fields: [userBId], references: [id], onDelete: Cascade)
+  messages  Message[]
+  sessions  Session[]
+
+  @@unique([userAId, userBId])
+  @@map("matches")
+}
+
+model Message {
+  id        String    @id @default(cuid())
+  matchId   String    @map("match_id")
+  senderId  String    @map("sender_id")
+  body      String
+  readAt    DateTime? @map("read_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  match     Match     @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  sender    User      @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([matchId, createdAt])
+  @@map("messages")
+}
+
+model Block {
+  id        String   @id @default(cuid())
+  blockerId String   @map("blocker_id")
+  blockedId String   @map("blocked_id")
+  reason    String?
+  createdAt DateTime @default(now()) @map("created_at")
+  blocker   User     @relation("Blocker", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked   User     @relation("Blocked", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  @@unique([blockerId, blockedId])
+  @@map("blocks")
+}
+
+model Report {
+  id         String    @id @default(cuid())
+  reporterId String    @map("reporter_id")
+  reportedId String    @map("reported_id")
+  reason     String
+  details    String?
+  resolvedAt DateTime? @map("resolved_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  reporter   User      @relation("Reporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  reported   User      @relation("Reported", fields: [reportedId], references: [id], onDelete: Cascade)
+
+  @@index([reportedId])
+  @@map("reports")
+}
+
+// ── Learning ──────────────────────────────────────────
+
+model Session {
+  id             String        @id @default(cuid())
+  matchId        String?       @map("match_id")
+  teacherId      String        @map("teacher_id")
+  learnerId      String        @map("learner_id")
+  skillId        String        @map("skill_id")
+  startsAt       DateTime      @map("starts_at")
+  durationMin    Int           @default(60) @map("duration_min")
+  mode           Mode
+  meetingUrl     String?       @map("meeting_url")
+  location       String?
+  status         SessionStatus @default(PROPOSED)
+  reminderSentAt DateTime?     @map("reminder_sent_at")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  match          Match?        @relation(fields: [matchId], references: [id])
+  teacher        User          @relation("Teacher", fields: [teacherId], references: [id])
+  learner        User          @relation("Learner", fields: [learnerId], references: [id])
+  skill          Skill         @relation(fields: [skillId], references: [id])
+  reviews        Review[]
+  creditTxs      CreditTx[]
+  // Generated column (see the extras migration). Exclusion constraints also live in raw SQL.
+  slot           Unsupported("tsrange")? @default(dbgenerated("tsrange(starts_at, (starts_at + ((duration_min)::double precision * '00:01:00'::interval)))"))
+
+  @@index([teacherId, startsAt])
+  @@index([learnerId, startsAt])
+  @@map("sessions")
+}
+
+model Review {
+  id         String   @id @default(cuid())
+  sessionId  String   @map("session_id")
+  reviewerId String   @map("reviewer_id")
+  revieweeId String   @map("reviewee_id")
+  rating     Int      // 1-5
+  comment    String?
+  createdAt  DateTime @default(now()) @map("created_at")
+  session    Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  reviewer   User     @relation("Reviewer", fields: [reviewerId], references: [id])
+  reviewee   User     @relation("Reviewee", fields: [revieweeId], references: [id])
+
+  @@unique([sessionId, reviewerId])
+  @@map("reviews")
+}
+
+model CreditTx {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  amount    Int
+  reason    String   // TAUGHT_SESSION | LEARNED_SESSION | SIGNUP_BONUS
+  sessionId String?  @map("session_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  session   Session? @relation(fields: [sessionId], references: [id])
+
+  @@index([userId, createdAt])
+  @@map("credit_tx")
+}
+
+// ── Swap chains ───────────────────────────────────────
+
+model SwapChain {
+  id        String        @id @default(cuid())
+  status    ChainStatus   @default(PROPOSED)
+  score     Int
+  expiresAt DateTime      @map("expires_at")
+  createdAt DateTime      @default(now()) @map("created_at")
+  members   ChainMember[]
+
+  @@map("swap_chains")
+}
+
+model ChainMember {
+  id           String    @id @default(cuid())
+  chainId      String    @map("chain_id")
+  userId       String    @map("user_id")
+  position     Int
+  teachSkillId String    @map("teach_skill")
+  accepted     Boolean?
+  chain        SwapChain @relation(fields: [chainId], references: [id], onDelete: Cascade)
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  teachSkill   Skill     @relation(fields: [teachSkillId], references: [id])
+
+  @@unique([chainId, userId])
+  @@map("chain_members")
+}
