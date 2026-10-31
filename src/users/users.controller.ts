@@ -13,7 +13,7 @@ export class UsersController {
 
   @Get()
   @ApiOkResponse({ type: MeDto })
-  me(@CurrentUser() user: AuthUser): Promise<MeDto> {
+  getMe(@CurrentUser() user: AuthUser): Promise<MeDto> {
     return this.users.getMe(user.id);
   }
 }

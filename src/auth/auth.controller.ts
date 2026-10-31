@@ -51,7 +51,7 @@ export class AuthController {
   @Public()
   @UseGuards(GoogleAuthGuard)
   @Get('google')
-  google(): void {}
+  startGoogleLogin(): void {}
 
   @Public()
   @UseGuards(GoogleAuthGuard)
@@ -112,7 +112,7 @@ export class AuthController {
   @ApiCookieAuth()
   @Get('socket-token')
   @ApiOkResponse({ type: SocketTokenResponse })
-  async socketToken(
+  async getSocketToken(
     @CurrentUser() user: AuthUser,
   ): Promise<SocketTokenResponse> {
     return {

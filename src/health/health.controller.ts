@@ -14,7 +14,7 @@ export class HealthController {
   @Public()
   @Get()
   @ApiOkResponse({ type: HealthResponse })
-  check(): HealthResponse {
+  getHealth(): HealthResponse {
     return { status: 'ok' };
   }
 }

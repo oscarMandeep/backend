@@ -6,7 +6,10 @@ export function buildOpenApiDocument(app: INestApplication): OpenAPIObject {
     .setTitle('SkillSwap API')
     .setVersion('1')
     .build();
-  return SwaggerModule.createDocument(app, config);
+  // Operation ids = method names, so generated hooks read useGetMe(), useRefresh()...
+  return SwaggerModule.createDocument(app, config, {
+    operationIdFactory: (_controllerKey, methodKey) => methodKey,
+  });
 }
 
 export function setupSwagger(app: INestApplication): void {

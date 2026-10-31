@@ -3,7 +3,7 @@
   "paths": {
     "/v1/auth/google": {
       "get": {
-        "operationId": "AuthController_google",
+        "operationId": "startGoogleLogin",
         "parameters": [],
         "responses": {
           "200": {
@@ -17,7 +17,7 @@
     },
     "/v1/auth/google/callback": {
       "get": {
-        "operationId": "AuthController_googleCallback",
+        "operationId": "googleCallback",
         "parameters": [],
         "responses": {
           "200": {
@@ -31,7 +31,7 @@
     },
     "/v1/auth/refresh": {
       "post": {
-        "operationId": "AuthController_refresh",
+        "operationId": "refresh",
         "parameters": [],
         "responses": {
           "204": {
@@ -45,7 +45,7 @@
     },
     "/v1/auth/logout": {
       "post": {
-        "operationId": "AuthController_logout",
+        "operationId": "logout",
         "parameters": [],
         "responses": {
           "204": {
@@ -64,7 +64,7 @@
     },
     "/v1/auth/socket-token": {
       "get": {
-        "operationId": "AuthController_socketToken",
+        "operationId": "getSocketToken",
         "parameters": [],
         "responses": {
           "200": {
@@ -90,7 +90,7 @@
     },
     "/v1/auth/dev-login": {
       "post": {
-        "operationId": "AuthController_devLogin",
+        "operationId": "devLogin",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -114,7 +114,7 @@
     },
     "/v1/me": {
       "get": {
-        "operationId": "UsersController_me",
+        "operationId": "getMe",
         "parameters": [],
         "responses": {
           "200": {
@@ -140,7 +140,7 @@
     },
     "/v1/health": {
       "get": {
-        "operationId": "HealthController_check",
+        "operationId": "getHealth",
         "parameters": [],
         "responses": {
           "200": {
