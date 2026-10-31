@@ -193,6 +193,65 @@
         ]
       }
     },
+    "/v1/discover": {
+      "get": {
+        "operationId": "getDiscover",
+        "parameters": [
+          {
+            "name": "mode",
+            "required": false,
+            "in": "query",
+            "description": "ONLINE or IN_PERSON keeps people who can do that; BOTH or omitted keeps everyone",
+            "schema": {
+              "$ref": "#/components/schemas/Mode"
+            }
+          },
+          {
+            "name": "swapOnly",
+            "required": false,
+            "in": "query",
+            "description": "Only two-way swaps (no credit matches)",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DeckCardDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "tags": [
+          "discover"
+        ]
+      }
+    },
     "/v1/me": {
       "get": {
         "operationId": "getMe",
@@ -509,6 +568,198 @@
           "skill",
           "goalLevel",
           "priority"
+        ]
+      },
+      "UserCardDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "avatarUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "bio": {
+            "type": "string",
+            "nullable": true
+          },
+          "city": {
+            "type": "string",
+            "nullable": true
+          },
+          "mode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Mode"
+              }
+            ]
+          },
+          "languages": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "ratingAvg": {
+            "type": "number"
+          },
+          "ratingCount": {
+            "type": "number"
+          },
+          "sessionsDone": {
+            "type": "number"
+          },
+          "isNew": {
+            "type": "boolean"
+          },
+          "haves": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HaveDto"
+            }
+          },
+          "wants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WantDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "username",
+          "name",
+          "mode",
+          "languages",
+          "ratingAvg",
+          "ratingCount",
+          "sessionsDone",
+          "isNew",
+          "haves",
+          "wants"
+        ]
+      },
+      "MatchKind": {
+        "type": "string",
+        "enum": [
+          "SWAP",
+          "CREDIT"
+        ]
+      },
+      "MatchBreakdownDto": {
+        "type": "object",
+        "properties": {
+          "skill": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "reciprocity": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "priority": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "availability": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "mode": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "language": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "trust": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        },
+        "required": [
+          "skill",
+          "reciprocity",
+          "priority",
+          "availability",
+          "mode",
+          "language",
+          "trust"
+        ]
+      },
+      "DeckCardDto": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/UserCardDto"
+          },
+          "score": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MatchKind"
+              }
+            ]
+          },
+          "breakdown": {
+            "$ref": "#/components/schemas/MatchBreakdownDto"
+          },
+          "reasons": {
+            "example": [
+              "Teaches Excel (you want)",
+              "6 shared hrs/week"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "learnSkill": {
+            "description": "What they can teach me",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SkillRefDto"
+              }
+            ]
+          },
+          "teachSkill": {
+            "nullable": true,
+            "description": "What I can teach them",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SkillRefDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "user",
+          "score",
+          "type",
+          "breakdown",
+          "reasons",
+          "learnSkill",
+          "teachSkill"
         ]
       },
       "AvailabilitySlotDto": {
