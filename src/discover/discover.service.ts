@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Mode } from '../generated/prisma/client';
+import { toSkillRef as ref, toUserCard } from '../matching/mappers';
 import {
   MatchingService,
   type MatchUser,
@@ -19,18 +20,6 @@ const DEFAULT_LIMIT = 20;
 const isNewUser = (u: MatchUser) => u.sessionsDone === 0 && u.ratingCount === 0;
 const rankKey = (c: ScoredCandidate) =>
   c.result.score + (isNewUser(c.user) ? NEW_USER_BOOST : 0);
-
-const ref = (s: {
-  id: string;
-  name: string;
-  slug: string;
-  category: string;
-}) => ({
-  id: s.id,
-  name: s.name,
-  slug: s.slug,
-  category: s.category,
-});
 
 @Injectable()
 export class DiscoverService {
@@ -89,30 +78,7 @@ export class DiscoverService {
       : null;
 
     return {
-      user: {
-        id: user.id,
-        username: user.username,
-        name: user.name,
-        avatarUrl: user.avatarUrl,
-        bio: user.bio,
-        city: user.city,
-        mode: user.mode,
-        languages: user.languages,
-        ratingAvg: user.ratingAvg,
-        ratingCount: user.ratingCount,
-        sessionsDone: user.sessionsDone,
-        isNew: user.sessionsDone === 0,
-        haves: user.haves.map((h) => ({
-          skill: ref(h.skill),
-          level: h.level,
-          verified: h.verified,
-        })),
-        wants: user.wants.map((w) => ({
-          skill: ref(w.skill),
-          goalLevel: w.goalLevel,
-          priority: w.priority,
-        })),
-      },
+      user: toUserCard(user),
       score: result.score,
       type: result.type,
       breakdown: result.parts,

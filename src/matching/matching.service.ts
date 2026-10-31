@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { findCandidateUserIds, loadSimilarity } from './matching.queries';
+import type { SkillRefDto } from '../skills/dto/skill-ref.dto';
 import { scoreMatch, type MatchResult, type Profile } from './score';
 
 /** Everything scoring and the deck cards need about a user, in one query. */
@@ -98,4 +99,29 @@ export class MatchingService {
     );
     return scoreMatch(toProfile(me), toProfile(other), similarity);
   }
+
+  /**
+   * The match as seen by `viewer`: the fresh score plus what `other` teaches the
+   * viewer (learn) and what the viewer teaches `other` (teach). Each person in a
+   * match sees the mirror image of the other.
+   */
+  async describePair(viewer: MatchUser, other: MatchUser): Promise<PairView> {
+    const result = await this.scorePair(viewer, other);
+    const learn =
+      other.haves.find((h) => h.skillId === result?.learnSkillId)?.skill ??
+      other.haves[0]?.skill;
+    if (!learn) throw new Error(`user ${other.id} has no skills to teach`);
+    const teach = result?.teachSkillId
+      ? (viewer.haves.find((h) => h.skillId === result.teachSkillId)?.skill ??
+        null)
+      : null;
+    return { result, learnSkill: learn, teachSkill: teach };
+  }
+}
+
+export interface PairView {
+  /** Null when the pair no longer qualifies (profiles changed after matching). */
+  result: MatchResult | null;
+  learnSkill: SkillRefDto;
+  teachSkill: SkillRefDto | null;
 }

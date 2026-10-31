@@ -252,6 +252,143 @@
         ]
       }
     },
+    "/v1/matches": {
+      "get": {
+        "operationId": "listMatches",
+        "parameters": [
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "description": "The nextCursor of the previous page",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedMatchesDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "tags": [
+          "matches"
+        ]
+      }
+    },
+    "/v1/matches/{id}": {
+      "get": {
+        "operationId": "getMatch",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MatchDetailDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "tags": [
+          "matches"
+        ]
+      }
+    },
+    "/v1/swipes": {
+      "post": {
+        "operationId": "createSwipe",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SwipeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SwipeResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "tags": [
+          "swipes"
+        ]
+      }
+    },
+    "/v1/swipes/last": {
+      "delete": {
+        "operationId": "undoLastSwipe",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": "The last PASS was undone"
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "tags": [
+          "swipes"
+        ]
+      }
+    },
     "/v1/me": {
       "get": {
         "operationId": "getMe",
@@ -760,6 +897,228 @@
           "reasons",
           "learnSkill",
           "teachSkill"
+        ]
+      },
+      "MatchType": {
+        "type": "string",
+        "enum": [
+          "SWAP",
+          "CREDIT",
+          "CHAIN"
+        ]
+      },
+      "MessageDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "matchId": {
+            "type": "string"
+          },
+          "senderId": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "readAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "matchId",
+          "senderId",
+          "body",
+          "readAt",
+          "createdAt"
+        ]
+      },
+      "MatchSummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MatchType"
+              }
+            ]
+          },
+          "score": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "otherUser": {
+            "$ref": "#/components/schemas/UserCardDto"
+          },
+          "lastMessage": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MessageDto"
+              }
+            ]
+          },
+          "unreadCount": {
+            "type": "number"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "score",
+          "otherUser",
+          "lastMessage",
+          "unreadCount",
+          "createdAt"
+        ]
+      },
+      "PaginatedMatchesDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MatchSummaryDto"
+            }
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ]
+      },
+      "MatchDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MatchType"
+              }
+            ]
+          },
+          "score": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "otherUser": {
+            "$ref": "#/components/schemas/UserCardDto"
+          },
+          "lastMessage": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MessageDto"
+              }
+            ]
+          },
+          "unreadCount": {
+            "type": "number"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "breakdown": {
+            "$ref": "#/components/schemas/MatchBreakdownDto"
+          },
+          "learnSkill": {
+            "description": "What they teach me",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SkillRefDto"
+              }
+            ]
+          },
+          "teachSkill": {
+            "nullable": true,
+            "description": "What I teach them",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SkillRefDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "score",
+          "otherUser",
+          "lastMessage",
+          "unreadCount",
+          "createdAt",
+          "breakdown",
+          "learnSkill",
+          "teachSkill"
+        ]
+      },
+      "SwipeAction": {
+        "type": "string",
+        "enum": [
+          "LIKE",
+          "PASS",
+          "SUPER"
+        ]
+      },
+      "SwipeDto": {
+        "type": "object",
+        "properties": {
+          "targetId": {
+            "type": "string"
+          },
+          "action": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SwipeAction"
+              }
+            ]
+          }
+        },
+        "required": [
+          "targetId",
+          "action"
+        ]
+      },
+      "SwipeResponseDto": {
+        "type": "object",
+        "properties": {
+          "matched": {
+            "type": "boolean"
+          },
+          "matchId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "matched"
         ]
       },
       "AvailabilitySlotDto": {

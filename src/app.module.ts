@@ -6,9 +6,12 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { HealthModule } from './health/health.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { AuthModule } from './auth/auth.module';
+import { ChatModule } from './chat/chat.module';
 import { DiscoverModule } from './discover/discover.module';
+import { MatchesModule } from './matches/matches.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { SkillsModule } from './skills/skills.module';
+import { SwipesModule } from './swipes/swipes.module';
 import { UsersModule } from './users/users.module';
 
 @Module({
@@ -19,6 +22,9 @@ import { UsersModule } from './users/users.module';
     AuthModule,
     SkillsModule,
     DiscoverModule,
+    MatchesModule,
+    SwipesModule,
+    ChatModule,
     UsersModule,
     HealthModule,
   ],
