@@ -1,12 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsInt, Max, Min } from 'class-validator';
 import { Mode, Priority } from '../../generated/prisma/client';
-
-export class SkillRefDto {
-  @ApiProperty() id!: string;
-  @ApiProperty() name!: string;
-  @ApiProperty() slug!: string;
-  @ApiProperty() category!: string;
-}
+import { SkillRefDto } from '../../skills/dto/skill-ref.dto';
 
 export class HaveDto {
   @ApiProperty({ type: SkillRefDto }) skill!: SkillRefDto;
@@ -22,9 +17,26 @@ export class WantDto {
 
 export class AvailabilitySlotDto {
   @ApiProperty({ minimum: 0, maximum: 6, description: '0 = Sunday' })
+  @IsInt()
+  @Min(0)
+  @Max(6)
   dayOfWeek!: number;
-  @ApiProperty({ description: 'Minutes from midnight' }) startMin!: number;
-  @ApiProperty() endMin!: number;
+
+  @ApiProperty({
+    minimum: 0,
+    maximum: 1439,
+    description: 'Minutes from midnight',
+  })
+  @IsInt()
+  @Min(0)
+  @Max(1439)
+  startMin!: number;
+
+  @ApiProperty({ minimum: 1, maximum: 1440 })
+  @IsInt()
+  @Min(1)
+  @Max(1440)
+  endMin!: number;
 }
 
 export class MeDto {

@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Mode, Priority, PrismaClient } from '../src/generated/prisma/client';
+import { slugify } from '../src/common/utils/slugify';
 
 const prisma = new PrismaClient({
   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
@@ -32,12 +33,7 @@ function pickDistinct<T>(arr: readonly T[], n: number, exclude: readonly T[] = [
   return out;
 }
 
-const slugify = (s: string) =>
-  s
-    .toLowerCase()
-    .replace(/[+#]/g, (c) => (c === '+' ? 'plus' : 'sharp'))
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '');
+
 
 // ── skills ────────────────────────────────────────────────
 

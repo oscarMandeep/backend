@@ -112,9 +112,225 @@
         ]
       }
     },
+    "/v1/skills/search": {
+      "get": {
+        "operationId": "searchSkills",
+        "parameters": [
+          {
+            "name": "q",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "example": "exel",
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 20,
+              "default": 8,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SkillRefDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "skills"
+        ]
+      }
+    },
+    "/v1/skills": {
+      "post": {
+        "operationId": "createSkill",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSkillDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillRefDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "tags": [
+          "skills"
+        ]
+      }
+    },
     "/v1/me": {
       "get": {
         "operationId": "getMe",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "tags": [
+          "me"
+        ]
+      },
+      "patch": {
+        "operationId": "updateMe",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/v1/me/skills": {
+      "put": {
+        "operationId": "updateMySkills",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSkillsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/v1/me/availability": {
+      "put": {
+        "operationId": "updateMyAvailability",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAvailabilityDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AvailabilitySlotDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/v1/me/onboarding/complete": {
+      "post": {
+        "operationId": "completeOnboarding",
         "parameters": [],
         "responses": {
           "200": {
@@ -198,14 +414,6 @@
           "email"
         ]
       },
-      "Mode": {
-        "type": "string",
-        "enum": [
-          "ONLINE",
-          "IN_PERSON",
-          "BOTH"
-        ]
-      },
       "SkillRefDto": {
         "type": "object",
         "properties": {
@@ -227,6 +435,26 @@
           "name",
           "slug",
           "category"
+        ]
+      },
+      "CreateSkillDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "exel formulas"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "Mode": {
+        "type": "string",
+        "enum": [
+          "ONLINE",
+          "IN_PERSON",
+          "BOTH"
         ]
       },
       "HaveDto": {
@@ -294,10 +522,14 @@
           },
           "startMin": {
             "type": "number",
+            "minimum": 0,
+            "maximum": 1439,
             "description": "Minutes from midnight"
           },
           "endMin": {
-            "type": "number"
+            "type": "number",
+            "minimum": 1,
+            "maximum": 1440
           }
         },
         "required": [
@@ -407,6 +639,148 @@
           "onboarded",
           "isPublic",
           "availability"
+        ]
+      },
+      "UpdateMeDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Riya Sharma"
+          },
+          "username": {
+            "type": "string",
+            "example": "riya_s",
+            "description": "3-20 lowercase letters, digits or _"
+          },
+          "bio": {
+            "type": "string",
+            "description": "Empty string clears it"
+          },
+          "city": {
+            "type": "string",
+            "example": "Dehradun",
+            "description": "Empty string clears it"
+          },
+          "mode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Mode"
+              }
+            ]
+          },
+          "languages": {
+            "example": [
+              "English",
+              "Hindi"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "timezone": {
+            "type": "string",
+            "example": "Asia/Kolkata"
+          },
+          "isPublic": {
+            "type": "boolean"
+          },
+          "avatarUrl": {
+            "type": "string",
+            "example": "https://res.cloudinary.com/demo/avatar.jpg"
+          }
+        }
+      },
+      "HaveInputDto": {
+        "type": "object",
+        "properties": {
+          "skillId": {
+            "type": "string"
+          },
+          "level": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 5
+          },
+          "years": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 60
+          },
+          "proofUrl": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "skillId",
+          "level"
+        ]
+      },
+      "WantInputDto": {
+        "type": "object",
+        "properties": {
+          "skillId": {
+            "type": "string"
+          },
+          "currentLevel": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 5
+          },
+          "goalLevel": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 5
+          },
+          "priority": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Priority"
+              }
+            ]
+          }
+        },
+        "required": [
+          "skillId",
+          "currentLevel",
+          "goalLevel",
+          "priority"
+        ]
+      },
+      "UpdateSkillsDto": {
+        "type": "object",
+        "properties": {
+          "haves": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HaveInputDto"
+            }
+          },
+          "wants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WantInputDto"
+            }
+          }
+        },
+        "required": [
+          "haves",
+          "wants"
+        ]
+      },
+      "UpdateAvailabilityDto": {
+        "type": "object",
+        "properties": {
+          "slots": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AvailabilitySlotDto"
+            }
+          }
+        },
+        "required": [
+          "slots"
         ]
       },
       "HealthResponse": {
