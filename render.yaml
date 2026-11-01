@@ -32,8 +32,8 @@ services:
         generateValue: true
       - key: REVALIDATE_SECRET # must equal the same value on Vercel
         sync: false
-      - key: WEB_URL
-        value: https://skillswap.vercel.app
+      - key: WEB_URL # your real Vercel URL, no trailing slash; set after the first Vercel deploy
+        sync: false
       - key: GOOGLE_CLIENT_ID
         sync: false
       - key: GOOGLE_CLIENT_SECRET
