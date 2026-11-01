@@ -15,6 +15,7 @@ import { execSync } from 'node:child_process';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { io } from 'socket.io-client';
 import { hashPassword } from '../src/common/utils/password';
+import { slugify } from '../src/common/utils/slugify';
 import { Mode, Priority, PrismaClient } from '../src/generated/prisma/client';
 
 const API = process.env.API_URL ?? 'http://localhost:4000';
@@ -78,6 +79,15 @@ const emailOf = (username: string) => `${username}@skillswap.dev`;
 
 async function createPeople(): Promise<number> {
   const skills = new Map((await prisma.skill.findMany()).map((s) => [s.name, s.id]));
+  // A fresh database only has the catalogue: add any showcase skill that is missing.
+  for (const name of new Set(PEOPLE.flatMap((p) => [...p.haves, ...p.wants]))) {
+    if (skills.has(name)) continue;
+    const created = await prisma.skill.create({
+      data: { name, slug: slugify(name), category: 'Other', aliases: [] },
+    });
+    skills.set(name, created.id);
+    console.log(`Added missing skill: ${name}`);
+  }
   const idOf = (name: string): string => {
     const id = skills.get(name);
     if (!id) throw new Error(`Skill "${name}" is not in the database. Run the base seed first.`);
