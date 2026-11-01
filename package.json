@@ -25,6 +25,7 @@
     "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:seed": "prisma db seed",
     "embed:skills": "tsx scripts/embed-skills.ts",
+    "seed:showcase": "tsx scripts/seed-showcase.ts",
     "chains:find": "nest build && node dist/find-chains.js"
   },
   "dependencies": {
