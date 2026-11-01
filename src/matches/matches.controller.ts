@@ -1,5 +1,10 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
-import { ApiCookieAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { Controller, Get, HttpCode, Param, Post, Query } from '@nestjs/common';
+import {
+  ApiCookieAuth,
+  ApiNoContentResponse,
+  ApiOkResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { AuthUser } from '../common/decorators/current-user.decorator';
 import {
@@ -7,6 +12,7 @@ import {
   MatchDetailDto,
   PaginatedMatchesDto,
 } from './dto/match.dto';
+import { ListMessagesQuery, PaginatedMessagesDto } from './dto/message.dto';
 import { MatchesService } from './matches.service';
 
 @ApiTags('matches')
@@ -31,5 +37,27 @@ export class MatchesController {
     @Param('id') id: string,
   ): Promise<MatchDetailDto> {
     return this.matches.detail(user.id, id);
+  }
+
+  @Get(':id/messages')
+  @ApiOkResponse({ type: PaginatedMessagesDto })
+  listMessages(
+    @CurrentUser() user: AuthUser,
+    @Param('id') id: string,
+    @Query() query: ListMessagesQuery,
+  ): Promise<PaginatedMessagesDto> {
+    return this.matches.listMessages(user.id, id, query.cursor, query.limit);
+  }
+
+  @Post(':id/archive')
+  @HttpCode(204)
+  @ApiNoContentResponse({
+    description: 'The match is hidden and the chat closed',
+  })
+  archiveMatch(
+    @CurrentUser() user: AuthUser,
+    @Param('id') id: string,
+  ): Promise<void> {
+    return this.matches.archive(user.id, id);
   }
 }

@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Events, type MatchCreatedEvent } from '../common/events';
-import { Prisma } from '../generated/prisma/client';
+import { MatchStatus, Prisma } from '../generated/prisma/client';
 import { toSkillRef, toUserCard } from '../matching/mappers';
 import {
   matchUserInclude,
@@ -19,7 +19,7 @@ import type {
   MatchSummaryDto,
   PaginatedMatchesDto,
 } from './dto/match.dto';
-import type { MessageDto } from './dto/message.dto';
+import type { MessageDto, PaginatedMessagesDto } from './dto/message.dto';
 
 const matchInclude = {
   userA: { include: matchUserInclude },
@@ -44,6 +44,27 @@ export const toMessageDto = (m: {
   readAt: m.readAt?.toISOString() ?? null,
   createdAt: m.createdAt.toISOString(),
 });
+
+export type MembershipError = 'MATCH_NOT_FOUND' | 'FORBIDDEN';
+export type Membership =
+  | {
+      ok: true;
+      match: {
+        id: string;
+        userAId: string;
+        userBId: string;
+        status: MatchStatus;
+      };
+    }
+  | { ok: false; code: MembershipError };
+
+const membershipError = (code: MembershipError) =>
+  code === 'MATCH_NOT_FOUND'
+    ? new NotFoundException({ code, message: 'Match not found.' })
+    : new ForbiddenException({
+        code,
+        message: 'You are not part of this match.',
+      });
 
 @Injectable()
 export class MatchesService {
@@ -126,25 +147,62 @@ export class MatchesService {
     };
   }
 
+  /**
+   * Is this user part of this match? One light query, shared by REST and sockets.
+   * Callers decide how to report the failure (HTTP error vs socket ack code).
+   */
+  async membership(userId: string, matchId: string): Promise<Membership> {
+    const match = await this.prisma.match.findUnique({
+      where: { id: matchId },
+      select: { id: true, userAId: true, userBId: true, status: true },
+    });
+    if (!match) return { ok: false, code: 'MATCH_NOT_FOUND' };
+    if (match.userAId !== userId && match.userBId !== userId)
+      return { ok: false, code: 'FORBIDDEN' };
+    return { ok: true, match };
+  }
+
   /** Throws 404 if the match does not exist, 403 if the user is not part of it. */
   async requireMember(userId: string, matchId: string): Promise<MatchRow> {
-    const match = await this.prisma.match.findUnique({
+    const check = await this.membership(userId, matchId);
+    if (!check.ok) throw membershipError(check.code);
+    return this.prisma.match.findUniqueOrThrow({
       where: { id: matchId },
       include: matchInclude,
     });
-    if (!match) {
-      throw new NotFoundException({
-        code: 'MATCH_NOT_FOUND',
-        message: 'Match not found.',
-      });
-    }
-    if (match.userAId !== userId && match.userBId !== userId) {
-      throw new ForbiddenException({
-        code: 'FORBIDDEN',
-        message: 'You are not part of this match.',
-      });
-    }
-    return match;
+  }
+
+  /** Chat history, newest first. */
+  async listMessages(
+    userId: string,
+    matchId: string,
+    cursor: string | undefined,
+    limit = 30,
+  ): Promise<PaginatedMessagesDto> {
+    const check = await this.membership(userId, matchId);
+    if (!check.ok) throw membershipError(check.code);
+
+    const rows = await this.prisma.message.findMany({
+      where: { matchId },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      take: limit + 1,
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+    });
+    const page = rows.slice(0, limit);
+    return {
+      items: page.map(toMessageDto),
+      nextCursor: rows.length > limit ? page[page.length - 1].id : null,
+    };
+  }
+
+  /** Hides the match for both people and closes the chat. Safe to repeat. */
+  async archive(userId: string, matchId: string): Promise<void> {
+    const check = await this.membership(userId, matchId);
+    if (!check.ok) throw membershipError(check.code);
+    await this.prisma.match.updateMany({
+      where: { id: matchId, status: MatchStatus.ACTIVE },
+      data: { status: MatchStatus.ARCHIVED },
+    });
   }
 
   private toSummary(

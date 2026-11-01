@@ -5,6 +5,7 @@
  */
 import type { Server, Socket } from 'socket.io';
 import type { MatchType } from '../generated/prisma/client';
+import type { MessageDto } from '../matches/dto/message.dto';
 import type { SkillRefDto } from '../skills/dto/skill-ref.dto';
 import type { UserCardDto } from '../users/dto/user-card.dto';
 
@@ -42,15 +43,73 @@ export interface ErrorPayload {
   message: string;
 }
 
+/** What every acknowledgement looks like: success with data, or a machine code. */
+export type Ack<T extends object = object> =
+  ({ ok: true } & T) | { ok: false; code: string };
+
+export interface MatchRefPayload {
+  matchId: string;
+}
+export interface ChatSendPayload {
+  matchId: string;
+  body: string; // 1..2000
+  clientId: string; // lets the sender match its optimistic message to the saved one
+}
+export interface ChatTypingPayload {
+  matchId: string;
+  typing: boolean;
+}
+export interface ChatReadPayload {
+  matchId: string;
+  lastMessageId: string;
+}
+
+export type ChatMessagePayload = MessageDto & { clientId?: string };
+export interface ChatTypingEvent {
+  matchId: string;
+  userId: string;
+  typing: boolean;
+}
+export interface ChatReadEvent {
+  matchId: string;
+  userId: string;
+  lastMessageId: string;
+}
+export interface PresenceEvent {
+  userId: string;
+  online: boolean;
+}
+
 /** server -> client */
 export interface ServerToClientEvents {
   [ServerEvents.MatchNew]: (payload: MatchNewPayload) => void;
+  [ServerEvents.ChatMessage]: (payload: ChatMessagePayload) => void;
+  [ServerEvents.ChatTyping]: (payload: ChatTypingEvent) => void;
+  [ServerEvents.ChatRead]: (payload: ChatReadEvent) => void;
+  [ServerEvents.Presence]: (payload: PresenceEvent) => void;
   [ServerEvents.Error]: (payload: ErrorPayload) => void;
 }
 
-/** client -> server (chat events arrive in Phase 8) */
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface ClientToServerEvents {}
+/** client -> server */
+export interface ClientToServerEvents {
+  [ClientEvents.MatchJoin]: (
+    payload: MatchRefPayload,
+    ack: (r: Ack) => void,
+  ) => void;
+  [ClientEvents.MatchLeave]: (
+    payload: MatchRefPayload,
+    ack: (r: Ack) => void,
+  ) => void;
+  [ClientEvents.ChatSend]: (
+    payload: ChatSendPayload,
+    ack: (r: Ack<{ message: MessageDto }>) => void,
+  ) => void;
+  [ClientEvents.ChatTyping]: (payload: ChatTypingPayload) => void;
+  [ClientEvents.ChatRead]: (
+    payload: ChatReadPayload,
+    ack: (r: Ack) => void,
+  ) => void;
+}
 
 export interface SocketData {
   userId: string;
