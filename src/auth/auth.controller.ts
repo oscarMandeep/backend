@@ -3,6 +3,9 @@ import {
   Controller,
   Get,
   HttpCode,
+  HttpException,
+  HttpStatus,
+  Ip,
   NotFoundException,
   Post,
   Req,
@@ -21,6 +24,7 @@ import type { Request, Response } from 'express';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { AuthUser } from '../common/decorators/current-user.decorator';
 import { Public } from '../common/decorators/public.decorator';
+import { RateLimiter } from '../common/utils/rate-limiter';
 import type { Env } from '../config/env.schema';
 import {
   clearAuthCookies,
@@ -29,6 +33,8 @@ import {
 } from './auth.cookies';
 import { AuthService } from './auth.service';
 import { DevLoginDto } from './dto/dev-login.dto';
+import { LoginDto } from './dto/login.dto';
+import { RegisterDto } from './dto/register.dto';
 import { SocketTokenResponse } from './dto/socket-token.dto';
 import { GoogleAuthGuard } from './google-auth.guard';
 import type { GoogleProfile } from './google.strategy';
@@ -43,8 +49,52 @@ export class AuthController {
     private readonly config: ConfigService<Env, true>,
   ) {}
 
+  // In memory, like the chat limiter: the API runs as one instance on the free tier.
+  private readonly loginLimiter = new RateLimiter(10, 60_000);
+  private readonly registerLimiter = new RateLimiter(5, 10 * 60_000);
+
+  private throttle(limiter: RateLimiter, key: string): void {
+    if (!limiter.consume(key)) {
+      throw new HttpException(
+        { code: 'RATE_LIMITED', message: 'Too many attempts. Wait a minute.' },
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
+  }
+
   private get isProd(): boolean {
     return this.config.get('NODE_ENV', { infer: true }) === 'production';
+  }
+
+  @Public()
+  @Post('register')
+  @HttpCode(204)
+  @ApiNoContentResponse({ description: 'Account created, cookies set' })
+  async register(
+    @Body() dto: RegisterDto,
+    @Ip() ip: string,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<void> {
+    this.throttle(this.registerLimiter, ip);
+    const { userId } = await this.auth.register(dto);
+    setAuthCookies(res, await this.tokens.issuePair(userId), this.isProd);
+  }
+
+  @Public()
+  @Post('login')
+  @HttpCode(204)
+  @ApiNoContentResponse({ description: 'Logged in, cookies set' })
+  async login(
+    @Body() dto: LoginDto,
+    @Ip() ip: string,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<void> {
+    this.throttle(this.loginLimiter, `${ip}|${dto.email}`);
+    const { userId } = await this.auth.loginWithPassword(
+      dto.email,
+      dto.password,
+    );
+    setAuthCookies(res, await this.tokens.issuePair(userId), this.isProd);
   }
 
   /** Passport redirects the browser to Google; the handler body never runs. */

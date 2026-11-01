@@ -71,6 +71,7 @@ model User {
   languages    String[]
   timezone     String   @default("Asia/Kolkata")
   googleId     String?  @unique @map("google_id")
+  passwordHash String?  @map("password_hash")
   verified     Boolean  @default(false)
   ratingAvg    Float    @default(0) @map("rating_avg")
   ratingCount  Int      @default(0) @map("rating_count")

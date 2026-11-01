@@ -1,7 +1,11 @@
 import 'dotenv/config';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Mode, Priority, PrismaClient } from '../src/generated/prisma/client';
+import { hashPassword } from '../src/common/utils/password';
 import { slugify } from '../src/common/utils/slugify';
+
+/** Every seeded account can log in with this (development only). */
+export const SEED_PASSWORD = 'password123';
 
 const prisma = new PrismaClient({
   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
@@ -221,11 +225,13 @@ async function main() {
   }
 
   const users = [...makeChainUsers(), ...makeRandomUsers()];
+  const passwordHash = await hashPassword(SEED_PASSWORD); // one hash, shared on purpose
   for (const u of users) {
     const isChain = ['demo', 'aarav', 'diya'].includes(u.username);
     await prisma.user.create({
       data: {
         email: u.email,
+        passwordHash,
         username: u.username,
         name: u.name,
         bio: u.bio,
