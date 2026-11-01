@@ -9,9 +9,12 @@ services:
     # --prod=false: Render sets NODE_ENV=production while building, which would make pnpm
     # skip devDependencies, but the build needs @nestjs/cli and the migration needs prisma.
     # Migrations run here because pre-deploy commands are not available on the free plan.
+    # prisma generate runs explicitly: on a rebuild pnpm reuses the cached node_modules and
+    # skips postinstall, but src/generated is not in git, so the client would be missing.
     buildCommand: >
       corepack enable &&
       pnpm install --frozen-lockfile --prod=false &&
+      pnpm prisma generate &&
       pnpm build &&
       pnpm prisma:migrate:deploy
     startCommand: pnpm start:prod
