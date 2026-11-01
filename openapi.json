@@ -841,6 +841,191 @@
         ]
       }
     },
+    "/v1/public/stats": {
+      "get": {
+        "operationId": "getPublicStats",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicStatsDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "public"
+        ]
+      }
+    },
+    "/v1/public/skills": {
+      "get": {
+        "operationId": "listPublicSkills",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50,
+              "type": "number"
+            }
+          },
+          {
+            "name": "category",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": "Music",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PublicSkillSummaryDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "public"
+        ]
+      }
+    },
+    "/v1/public/skills/{slug}": {
+      "get": {
+        "operationId": "getPublicSkill",
+        "parameters": [
+          {
+            "name": "slug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicSkillDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "public"
+        ]
+      }
+    },
+    "/v1/public/skills/{slug}/cities/{city}": {
+      "get": {
+        "operationId": "getPublicSkillInCity",
+        "parameters": [
+          {
+            "name": "slug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "city",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicSkillCityDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "public"
+        ]
+      }
+    },
+    "/v1/public/users/{username}": {
+      "get": {
+        "operationId": "getPublicProfile",
+        "parameters": [
+          {
+            "name": "username",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicProfileDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "public"
+        ]
+      }
+    },
+    "/v1/public/sitemap": {
+      "get": {
+        "operationId": "getPublicSitemap",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicSitemapDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "public"
+        ]
+      }
+    },
     "/v1/me": {
       "get": {
         "operationId": "getMe",
@@ -1866,6 +2051,364 @@
         "required": [
           "sessionId",
           "rating"
+        ]
+      },
+      "TopSwapDto": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "$ref": "#/components/schemas/SkillRefDto"
+          },
+          "to": {
+            "$ref": "#/components/schemas/SkillRefDto"
+          },
+          "count": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "count"
+        ]
+      },
+      "PublicStatsDto": {
+        "type": "object",
+        "properties": {
+          "users": {
+            "type": "number"
+          },
+          "skills": {
+            "type": "number"
+          },
+          "sessions": {
+            "type": "number"
+          },
+          "topSwaps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TopSwapDto"
+            }
+          }
+        },
+        "required": [
+          "users",
+          "skills",
+          "sessions",
+          "topSwaps"
+        ]
+      },
+      "PublicSkillSummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "teacherCount": {
+            "type": "number"
+          },
+          "learnerCount": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "category",
+          "teacherCount",
+          "learnerCount"
+        ]
+      },
+      "SwapCountDto": {
+        "type": "object",
+        "properties": {
+          "skill": {
+            "$ref": "#/components/schemas/SkillRefDto"
+          },
+          "count": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "skill",
+          "count"
+        ]
+      },
+      "PublicProfileCardDto": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "avatarUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "city": {
+            "type": "string",
+            "nullable": true
+          },
+          "ratingAvg": {
+            "type": "number"
+          },
+          "sessionsDone": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "username",
+          "name",
+          "avatarUrl",
+          "city",
+          "ratingAvg",
+          "sessionsDone"
+        ]
+      },
+      "PublicSkillDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "teacherCount": {
+            "type": "number"
+          },
+          "learnerCount": {
+            "type": "number"
+          },
+          "popularSwaps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SwapCountDto"
+            }
+          },
+          "teachers": {
+            "description": "At most 12, public profiles only",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PublicProfileCardDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "category",
+          "description",
+          "teacherCount",
+          "learnerCount",
+          "popularSwaps",
+          "teachers"
+        ]
+      },
+      "PublicSkillCityDto": {
+        "type": "object",
+        "properties": {
+          "skill": {
+            "$ref": "#/components/schemas/SkillRefDto"
+          },
+          "city": {
+            "type": "string"
+          },
+          "teacherCount": {
+            "type": "number"
+          },
+          "teachers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PublicProfileCardDto"
+            }
+          }
+        },
+        "required": [
+          "skill",
+          "city",
+          "teacherCount",
+          "teachers"
+        ]
+      },
+      "PublicHaveDto": {
+        "type": "object",
+        "properties": {
+          "skill": {
+            "$ref": "#/components/schemas/SkillRefDto"
+          },
+          "level": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 5
+          }
+        },
+        "required": [
+          "skill",
+          "level"
+        ]
+      },
+      "PublicWantDto": {
+        "type": "object",
+        "properties": {
+          "skill": {
+            "$ref": "#/components/schemas/SkillRefDto"
+          }
+        },
+        "required": [
+          "skill"
+        ]
+      },
+      "PublicProfileDto": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "avatarUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "city": {
+            "type": "string",
+            "nullable": true
+          },
+          "ratingAvg": {
+            "type": "number"
+          },
+          "sessionsDone": {
+            "type": "number"
+          },
+          "bio": {
+            "type": "string",
+            "nullable": true
+          },
+          "haves": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PublicHaveDto"
+            }
+          },
+          "wants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PublicWantDto"
+            }
+          }
+        },
+        "required": [
+          "username",
+          "name",
+          "avatarUrl",
+          "city",
+          "ratingAvg",
+          "sessionsDone",
+          "bio",
+          "haves",
+          "wants"
+        ]
+      },
+      "SitemapSkillDto": {
+        "type": "object",
+        "properties": {
+          "slug": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "slug",
+          "updatedAt"
+        ]
+      },
+      "SitemapUserDto": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "username",
+          "updatedAt"
+        ]
+      },
+      "SitemapLocalPageDto": {
+        "type": "object",
+        "properties": {
+          "skill": {
+            "type": "string",
+            "description": "Skill slug"
+          },
+          "city": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "skill",
+          "city"
+        ]
+      },
+      "PublicSitemapDto": {
+        "type": "object",
+        "properties": {
+          "skills": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SitemapSkillDto"
+            }
+          },
+          "users": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SitemapUserDto"
+            }
+          },
+          "localPages": {
+            "description": "Skill + city pairs with at least 3 public teachers",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SitemapLocalPageDto"
+            }
+          }
+        },
+        "required": [
+          "skills",
+          "users",
+          "localPages"
         ]
       },
       "AvailabilitySlotDto": {

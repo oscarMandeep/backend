@@ -11,7 +11,9 @@ import { ChatModule } from './chat/chat.module';
 import { CreditsModule } from './credits/credits.module';
 import { DiscoverModule } from './discover/discover.module';
 import { MatchesModule } from './matches/matches.module';
+import { NotificationsModule } from './notifications/notifications.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { PublicModule } from './public/public.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { SessionsModule } from './sessions/sessions.module';
 import { SkillsModule } from './skills/skills.module';
@@ -32,6 +34,8 @@ import { UsersModule } from './users/users.module';
     CreditsModule,
     SessionsModule,
     ReviewsModule,
+    NotificationsModule,
+    PublicModule,
     ChatModule,
     UsersModule,
     HealthModule,

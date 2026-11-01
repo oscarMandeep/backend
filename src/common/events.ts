@@ -1,6 +1,7 @@
 /** Domain events (in-process, @nestjs/event-emitter). Modules talk through these. */
 export const Events = {
   UserUpdated: 'user.updated',
+  SkillCreated: 'skill.created',
   MatchCreated: 'match.created',
   SessionProposed: 'session.proposed',
   SessionUpdated: 'session.updated',
@@ -24,4 +25,8 @@ export interface MatchCreatedEvent {
 export interface SessionEvent {
   sessionId: string;
   userIds: [string, string];
+}
+
+export interface SkillCreatedEvent {
+  slug: string;
 }

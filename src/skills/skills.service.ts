@@ -1,5 +1,7 @@
 import { Injectable, UnprocessableEntityException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { GroqService } from '../ai/groq.service';
+import { Events, type SkillCreatedEvent } from '../common/events';
 import { slugify } from '../common/utils/slugify';
 import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
@@ -12,6 +14,7 @@ export class SkillsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly groq: GroqService,
+    private readonly events: EventEmitter2,
   ) {}
 
   /**
@@ -52,10 +55,13 @@ export class SkillsService {
     if (existing) return existing;
 
     try {
-      return await this.prisma.skill.create({
+      const created = await this.prisma.skill.create({
         data: { name, slug, category },
         select: REF,
       });
+      const event: SkillCreatedEvent = { slug: created.slug };
+      this.events.emit(Events.SkillCreated, event);
+      return created;
     } catch (err) {
       // Lost a race with another request creating the same skill.
       if ((err as { code?: unknown }).code === 'P2002') {
