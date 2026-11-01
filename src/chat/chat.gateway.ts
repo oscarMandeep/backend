@@ -15,12 +15,14 @@ import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import {
   Events,
+  type ChainEvent,
   type MatchCreatedEvent,
   type SessionEvent,
 } from '../common/events';
 import { RateLimiter } from '../common/utils/rate-limiter';
 import type { Env } from '../config/env.schema';
 import { MatchStatus } from '../generated/prisma/client';
+import { ChainsService } from '../chains/chains.service';
 import { MatchesService } from '../matches/matches.service';
 import { SessionsService } from '../sessions/sessions.service';
 import { ChatService } from './chat.service';
@@ -73,6 +75,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection {
     private readonly matches: MatchesService,
     private readonly chat: ChatService,
     private readonly sessions: SessionsService,
+    private readonly chains: ChainsService,
   ) {}
 
   /**
@@ -233,6 +236,8 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection {
   /** A match was created: each of the two people gets the mirror-image payload. */
   @OnEvent(Events.MatchCreated)
   async onMatchCreated(event: MatchCreatedEvent): Promise<void> {
+    // No socket server (e.g. the chains:find command): nobody can be connected, nothing to push.
+    if (!this.server) return;
     try {
       for (const userId of [event.userAId, event.userBId]) {
         const payload = await this.matches.buildMatchNew(event.matchId, userId);
@@ -257,6 +262,8 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection {
   }
 
   private async pushSession(event: SessionEvent): Promise<void> {
+    // No socket server (e.g. the chains:find command): nobody can be connected, nothing to push.
+    if (!this.server) return;
     try {
       for (const userId of event.userIds) {
         const payload = await this.sessions.getFor(event.sessionId, userId);
@@ -268,6 +275,33 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection {
       this.logger.error(
         `session:update failed for ${event.sessionId}: ${String(err)}`,
       );
+    }
+  }
+
+  /** A swap chain was proposed or changed: every member sees the same chain. */
+  @OnEvent(Events.ChainProposed)
+  onChainProposed(event: ChainEvent): Promise<void> {
+    return this.pushChain(event, ServerEvents.ChainProposed);
+  }
+
+  @OnEvent(Events.ChainUpdated)
+  onChainUpdated(event: ChainEvent): Promise<void> {
+    return this.pushChain(event, ServerEvents.ChainUpdate);
+  }
+
+  private async pushChain(
+    event: ChainEvent,
+    name: typeof ServerEvents.ChainProposed | typeof ServerEvents.ChainUpdate,
+  ): Promise<void> {
+    // No socket server (e.g. the chains:find command): nobody can be connected, nothing to push.
+    if (!this.server) return;
+    try {
+      const payload = await this.chains.getFor(event.chainId);
+      for (const userId of event.userIds) {
+        this.server.to(userRoom(userId)).emit(name, payload);
+      }
+    } catch (err) {
+      this.logger.error(`${name} failed for ${event.chainId}: ${String(err)}`);
     }
   }
 

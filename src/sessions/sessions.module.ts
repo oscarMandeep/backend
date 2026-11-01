@@ -10,6 +10,6 @@ import { SlotsService } from './slots.service';
   imports: [MatchesModule, CreditsModule],
   controllers: [SessionsController],
   providers: [SessionsService, SlotsService, SessionsCron],
-  exports: [SessionsService],
+  exports: [SessionsService, SlotsService],
 })
 export class SessionsModule {}

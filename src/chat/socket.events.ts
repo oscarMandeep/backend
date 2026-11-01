@@ -5,6 +5,7 @@
  */
 import type { Server, Socket } from 'socket.io';
 import type { MatchType } from '../generated/prisma/client';
+import type { ChainDto } from '../chains/dto/chain.dto';
 import type { MessageDto } from '../matches/dto/message.dto';
 import type { SessionDto } from '../sessions/dto/session.dto';
 import type { SkillRefDto } from '../skills/dto/skill-ref.dto';
@@ -89,6 +90,8 @@ export interface ServerToClientEvents {
   [ServerEvents.ChatRead]: (payload: ChatReadEvent) => void;
   [ServerEvents.Presence]: (payload: PresenceEvent) => void;
   [ServerEvents.SessionUpdate]: (payload: SessionDto) => void;
+  [ServerEvents.ChainProposed]: (payload: ChainDto) => void;
+  [ServerEvents.ChainUpdate]: (payload: ChainDto) => void;
   [ServerEvents.Error]: (payload: ErrorPayload) => void;
 }
 

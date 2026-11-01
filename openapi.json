@@ -841,6 +841,166 @@
         ]
       }
     },
+    "/v1/chains": {
+      "get": {
+        "operationId": "listChains",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChainDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "tags": [
+          "chains"
+        ]
+      }
+    },
+    "/v1/chains/{id}/respond": {
+      "post": {
+        "operationId": "respondToChain",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RespondChainDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChainDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "tags": [
+          "chains"
+        ]
+      }
+    },
+    "/v1/blocks": {
+      "post": {
+        "operationId": "blockUser",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BlockUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "tags": [
+          "safety"
+        ]
+      }
+    },
+    "/v1/blocks/{userId}": {
+      "delete": {
+        "operationId": "unblockUser",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "tags": [
+          "safety"
+        ]
+      }
+    },
+    "/v1/reports": {
+      "post": {
+        "operationId": "reportUser",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The report was recorded"
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "tags": [
+          "safety"
+        ]
+      }
+    },
     "/v1/public/stats": {
       "get": {
         "operationId": "getPublicStats",
@@ -2051,6 +2211,131 @@
         "required": [
           "sessionId",
           "rating"
+        ]
+      },
+      "ChainStatus": {
+        "type": "string",
+        "enum": [
+          "PROPOSED",
+          "ACCEPTED",
+          "REJECTED",
+          "EXPIRED"
+        ]
+      },
+      "ChainMemberDto": {
+        "type": "object",
+        "properties": {
+          "position": {
+            "type": "number",
+            "description": "0-based place in the loop; the last member teaches the first"
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserCardDto"
+          },
+          "teachSkill": {
+            "description": "What this person teaches the NEXT person",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SkillRefDto"
+              }
+            ]
+          },
+          "accepted": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "null = has not answered yet"
+          }
+        },
+        "required": [
+          "position",
+          "user",
+          "teachSkill",
+          "accepted"
+        ]
+      },
+      "ChainDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ChainStatus"
+              }
+            ]
+          },
+          "score": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "members": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChainMemberDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "score",
+          "expiresAt",
+          "members"
+        ]
+      },
+      "RespondChainDto": {
+        "type": "object",
+        "properties": {
+          "accept": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "accept"
+        ]
+      },
+      "BlockUserDto": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "userId"
+        ]
+      },
+      "ReportUserDto": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string",
+            "example": "Harassment",
+            "minLength": 3,
+            "maxLength": 100
+          },
+          "details": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "userId",
+          "reason"
         ]
       },
       "TopSwapDto": {

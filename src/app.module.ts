@@ -7,6 +7,7 @@ import { HealthModule } from './health/health.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ScheduleModule } from '@nestjs/schedule';
 import { AuthModule } from './auth/auth.module';
+import { ChainsModule } from './chains/chains.module';
 import { ChatModule } from './chat/chat.module';
 import { CreditsModule } from './credits/credits.module';
 import { DiscoverModule } from './discover/discover.module';
@@ -15,6 +16,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { PublicModule } from './public/public.module';
 import { ReviewsModule } from './reviews/reviews.module';
+import { SafetyModule } from './safety/safety.module';
 import { SessionsModule } from './sessions/sessions.module';
 import { SkillsModule } from './skills/skills.module';
 import { SwipesModule } from './swipes/swipes.module';
@@ -34,6 +36,8 @@ import { UsersModule } from './users/users.module';
     CreditsModule,
     SessionsModule,
     ReviewsModule,
+    ChainsModule,
+    SafetyModule,
     NotificationsModule,
     PublicModule,
     ChatModule,

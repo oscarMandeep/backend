@@ -24,7 +24,8 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:seed": "prisma db seed",
-    "embed:skills": "tsx scripts/embed-skills.ts"
+    "embed:skills": "tsx scripts/embed-skills.ts",
+    "chains:find": "nest build && node dist/find-chains.js"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
@@ -104,5 +105,8 @@
     "moduleNameMapper": {
       "^(\\.{1,2}/.*)\\.js$": "$1"
     }
+  },
+  "engines": {
+    "node": ">=22.12"
   }
 }

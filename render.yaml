@@ -1,0 +1,50 @@
+# Render Blueprint (docs/06-deployment.md, adapted: this repo is the API only).
+# Create it with: Render dashboard -> New -> Blueprint -> pick this repo.
+services:
+  - type: web
+    name: skillswap-api
+    runtime: node
+    plan: free
+    region: singapore
+    # --prod=false: Render sets NODE_ENV=production while building, which would make pnpm
+    # skip devDependencies, but the build needs @nestjs/cli and the migration needs prisma.
+    # Migrations run here because pre-deploy commands are not available on the free plan.
+    buildCommand: >
+      corepack enable &&
+      pnpm install --frozen-lockfile --prod=false &&
+      pnpm build &&
+      pnpm prisma:migrate:deploy
+    startCommand: pnpm start:prod
+    healthCheckPath: /v1/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL # Neon POOLED url (host contains -pooler)
+        sync: false
+      - key: DIRECT_URL # Neon DIRECT url, used by migrations only
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: SOCKET_JWT_SECRET
+        generateValue: true
+      - key: REVALIDATE_SECRET # must equal the same value on Vercel
+        sync: false
+      - key: WEB_URL
+        value: https://skillswap.vercel.app
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_CALLBACK_URL
+        value: https://skillswap.vercel.app/api/v1/auth/google/callback
+      - key: GROQ_API_KEY
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: EMAIL_FROM
+        value: "SkillSwap <onboarding@resend.dev>"
+      - key: CLOUDINARY_URL
+        sync: false

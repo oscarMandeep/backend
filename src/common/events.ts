@@ -2,6 +2,8 @@
 export const Events = {
   UserUpdated: 'user.updated',
   SkillCreated: 'skill.created',
+  ChainProposed: 'chain.proposed',
+  ChainUpdated: 'chain.updated',
   MatchCreated: 'match.created',
   SessionProposed: 'session.proposed',
   SessionUpdated: 'session.updated',
@@ -29,4 +31,10 @@ export interface SessionEvent {
 
 export interface SkillCreatedEvent {
   slug: string;
+}
+
+/** Shared by chain.* events: who is in the chain. */
+export interface ChainEvent {
+  chainId: string;
+  userIds: string[];
 }
