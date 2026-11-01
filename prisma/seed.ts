@@ -3,6 +3,7 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { Mode, Priority, PrismaClient } from '../src/generated/prisma/client';
 import { hashPassword } from '../src/common/utils/password';
 import { slugify } from '../src/common/utils/slugify';
+import { SKILLS } from './skills-data';
 
 /** Every seeded account can log in with this (development only). */
 export const SEED_PASSWORD = 'password123';
@@ -41,48 +42,6 @@ function pickDistinct<T>(arr: readonly T[], n: number, exclude: readonly T[] = [
 
 // ── skills ────────────────────────────────────────────────
 
-const SKILLS: { name: string; category: string; aliases: string[] }[] = [
-  { name: 'Python', category: 'Programming', aliases: ['python3', 'py'] },
-  { name: 'JavaScript', category: 'Programming', aliases: ['js', 'ecmascript'] },
-  { name: 'TypeScript', category: 'Programming', aliases: ['ts'] },
-  { name: 'React', category: 'Programming', aliases: ['reactjs', 'react.js'] },
-  { name: 'Node.js', category: 'Programming', aliases: ['node', 'nodejs'] },
-  { name: 'SQL', category: 'Programming', aliases: ['postgres', 'mysql', 'databases'] },
-  { name: 'Data Analysis', category: 'Data', aliases: ['analytics', 'pandas'] },
-  { name: 'Microsoft Excel', category: 'Data', aliases: ['excel', 'spreadsheets', 'google sheets'] },
-  { name: 'Machine Learning', category: 'Data', aliases: ['ml', 'ai'] },
-  { name: 'UI/UX Design', category: 'Design', aliases: ['ui design', 'ux', 'product design'] },
-  { name: 'Figma', category: 'Design', aliases: ['prototyping', 'wireframes'] },
-  { name: 'Graphic Design', category: 'Design', aliases: ['photoshop', 'illustrator', 'canva'] },
-  { name: 'Video Editing', category: 'Creative', aliases: ['premiere', 'final cut', 'reels'] },
-  { name: 'Photography', category: 'Creative', aliases: ['camera', 'photo editing'] },
-  { name: 'Content Writing', category: 'Creative', aliases: ['blogging', 'copywriting'] },
-  { name: 'Guitar', category: 'Music', aliases: ['acoustic guitar', 'electric guitar'] },
-  { name: 'Piano', category: 'Music', aliases: ['keyboard', 'keys'] },
-  { name: 'Singing', category: 'Music', aliases: ['vocals', 'voice training'] },
-  { name: 'Tabla', category: 'Music', aliases: ['percussion', 'indian drums'] },
-  { name: 'Spanish', category: 'Languages', aliases: ['espanol', 'castellano'] },
-  { name: 'French', category: 'Languages', aliases: ['francais'] },
-  { name: 'German', category: 'Languages', aliases: ['deutsch'] },
-  { name: 'Japanese', category: 'Languages', aliases: ['nihongo', 'jlpt'] },
-  { name: 'English Speaking', category: 'Languages', aliases: ['spoken english', 'ielts'] },
-  { name: 'Hindi', category: 'Languages', aliases: ['hindustani'] },
-  { name: 'Yoga', category: 'Fitness', aliases: ['asana', 'pranayama'] },
-  { name: 'Home Workout', category: 'Fitness', aliases: ['calisthenics', 'fitness training'] },
-  { name: 'Running', category: 'Fitness', aliases: ['marathon', 'jogging'] },
-  { name: 'Meditation', category: 'Wellness', aliases: ['mindfulness'] },
-  { name: 'North Indian Cooking', category: 'Cooking', aliases: ['indian food', 'curry'] },
-  { name: 'Baking', category: 'Cooking', aliases: ['cakes', 'bread'] },
-  { name: 'Digital Marketing', category: 'Business', aliases: ['seo', 'social media marketing'] },
-  { name: 'Public Speaking', category: 'Business', aliases: ['presentations', 'communication'] },
-  { name: 'Accounting', category: 'Business', aliases: ['tally', 'bookkeeping', 'gst'] },
-  { name: 'Stock Market Basics', category: 'Business', aliases: ['investing', 'trading'] },
-  { name: 'Chess', category: 'Games', aliases: ['chess openings'] },
-  { name: 'Drawing', category: 'Art', aliases: ['sketching', 'pencil art'] },
-  { name: 'Painting', category: 'Art', aliases: ['watercolor', 'acrylic'] },
-  { name: 'Gardening', category: 'Lifestyle', aliases: ['plants', 'terrace garden'] },
-  { name: 'Sanskrit', category: 'Languages', aliases: ['shlokas', 'vedic chanting'] },
-];
 
 // ── users ─────────────────────────────────────────────────
 

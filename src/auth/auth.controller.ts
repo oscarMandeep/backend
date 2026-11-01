@@ -51,7 +51,10 @@ export class AuthController {
 
   // In memory, like the chat limiter: the API runs as one instance on the free tier.
   private readonly loginLimiter = new RateLimiter(10, 60_000);
-  private readonly registerLimiter = new RateLimiter(5, 10 * 60_000);
+  // Behind the Vercel proxy many visitors share one address, so the per-IP limit is generous;
+  // the per-email one is what stops repeated attempts on a single account.
+  private readonly registerIpLimiter = new RateLimiter(60, 10 * 60_000);
+  private readonly registerEmailLimiter = new RateLimiter(5, 10 * 60_000);
 
   private throttle(limiter: RateLimiter, key: string): void {
     if (!limiter.consume(key)) {
@@ -75,7 +78,8 @@ export class AuthController {
     @Ip() ip: string,
     @Res({ passthrough: true }) res: Response,
   ): Promise<void> {
-    this.throttle(this.registerLimiter, ip);
+    this.throttle(this.registerIpLimiter, ip);
+    this.throttle(this.registerEmailLimiter, dto.email);
     const { userId } = await this.auth.register(dto);
     setAuthCookies(res, await this.tokens.issuePair(userId), this.isProd);
   }
