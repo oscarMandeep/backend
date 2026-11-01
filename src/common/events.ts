@@ -2,6 +2,11 @@
 export const Events = {
   UserUpdated: 'user.updated',
   MatchCreated: 'match.created',
+  SessionProposed: 'session.proposed',
+  SessionUpdated: 'session.updated',
+  SessionCompleted: 'session.completed',
+  SessionReminder: 'session.reminder',
+  SessionNeedsResolution: 'session.needs-resolution',
 } as const;
 
 export interface UserUpdatedEvent {
@@ -13,4 +18,10 @@ export interface MatchCreatedEvent {
   matchId: string;
   userAId: string;
   userBId: string;
+}
+
+/** Shared by every session.* event: who must be told. */
+export interface SessionEvent {
+  sessionId: string;
+  userIds: [string, string];
 }

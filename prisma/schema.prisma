@@ -15,26 +15,31 @@ enum Mode {
   IN_PERSON
   BOTH
 }
+
 enum Priority {
   HIGH
   MEDIUM
   LOW
 }
+
 enum SwipeAction {
   LIKE
   PASS
   SUPER
 }
+
 enum MatchType {
   SWAP
   CREDIT
   CHAIN
 }
+
 enum MatchStatus {
   ACTIVE
   ARCHIVED
   BLOCKED
 }
+
 enum SessionStatus {
   PROPOSED
   CONFIRMED
@@ -42,6 +47,7 @@ enum SessionStatus {
   CANCELLED
   NO_SHOW
 }
+
 enum ChainStatus {
   PROPOSED
   ACCEPTED
@@ -76,25 +82,26 @@ model User {
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
-  refreshTokens RefreshToken[]
-  haves         UserSkillHave[]
-  wants         UserSkillWant[]
-  slots         AvailabilitySlot[]
-  swipesMade    Swipe[]       @relation("Swiper")
-  swipesGot     Swipe[]       @relation("Swiped")
-  matchesA      Match[]       @relation("UserA")
-  matchesB      Match[]       @relation("UserB")
-  messages      Message[]
-  teaching      Session[]     @relation("Teacher")
-  learning      Session[]     @relation("Learner")
-  reviewsGiven  Review[]      @relation("Reviewer")
-  reviewsGot    Review[]      @relation("Reviewee")
-  ledger        CreditTx[]
-  chainMembers  ChainMember[]
-  blocksMade    Block[]       @relation("Blocker")
-  blocksGot     Block[]       @relation("Blocked")
-  reportsMade   Report[]      @relation("Reporter")
-  reportsGot    Report[]      @relation("Reported")
+  refreshTokens    RefreshToken[]
+  haves            UserSkillHave[]
+  wants            UserSkillWant[]
+  slots            AvailabilitySlot[]
+  swipesMade       Swipe[]            @relation("Swiper")
+  swipesGot        Swipe[]            @relation("Swiped")
+  matchesA         Match[]            @relation("UserA")
+  matchesB         Match[]            @relation("UserB")
+  messages         Message[]
+  teaching         Session[]          @relation("Teacher")
+  proposedSessions Session[]          @relation("Proposer")
+  learning         Session[]          @relation("Learner")
+  reviewsGiven     Review[]           @relation("Reviewer")
+  reviewsGot       Review[]           @relation("Reviewee")
+  ledger           CreditTx[]
+  chainMembers     ChainMember[]
+  blocksMade       Block[]            @relation("Blocker")
+  blocksGot        Block[]            @relation("Blocked")
+  reportsMade      Report[]           @relation("Reporter")
+  reportsGot       Report[]           @relation("Reported")
 
   @@index([city])
   @@index([languages], type: Gin, map: "users_languages_idx")
@@ -118,7 +125,7 @@ model AvailabilitySlot {
   id        String @id @default(cuid())
   userId    String @map("user_id")
   dayOfWeek Int    @map("day_of_week") // 0 = Sun ... 6 = Sat
-  startMin  Int    @map("start_min")   // minutes from midnight
+  startMin  Int    @map("start_min") // minutes from midnight
   endMin    Int    @map("end_min")
   user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -129,15 +136,15 @@ model AvailabilitySlot {
 // ── Skills ────────────────────────────────────────────
 
 model Skill {
-  id          String                       @id @default(cuid())
-  name        String                       @unique
-  slug        String                       @unique
+  id          String                      @id @default(cuid())
+  name        String                      @unique
+  slug        String                      @unique
   category    String
   description String?
   aliases     String[]
   embedding   Unsupported("vector(384)")?
-  createdAt   DateTime                     @default(now()) @map("created_at")
-  updatedAt   DateTime                     @updatedAt @map("updated_at")
+  createdAt   DateTime                    @default(now()) @map("created_at")
+  updatedAt   DateTime                    @updatedAt @map("updated_at")
 
   haves         UserSkillHave[]
   wants         UserSkillWant[]
@@ -153,7 +160,7 @@ model UserSkillHave {
   id       String  @id @default(cuid())
   userId   String  @map("user_id")
   skillId  String  @map("skill_id")
-  level    Int     // 1-5
+  level    Int // 1-5
   years    Float?
   proofUrl String? @map("proof_url")
   verified Boolean @default(false)
@@ -261,27 +268,32 @@ model Report {
 // ── Learning ──────────────────────────────────────────
 
 model Session {
-  id             String        @id @default(cuid())
-  matchId        String?       @map("match_id")
-  teacherId      String        @map("teacher_id")
-  learnerId      String        @map("learner_id")
-  skillId        String        @map("skill_id")
-  startsAt       DateTime      @map("starts_at")
-  durationMin    Int           @default(60) @map("duration_min")
-  mode           Mode
-  meetingUrl     String?       @map("meeting_url")
-  location       String?
-  status         SessionStatus @default(PROPOSED)
-  reminderSentAt DateTime?     @map("reminder_sent_at")
-  createdAt      DateTime      @default(now()) @map("created_at")
-  match          Match?        @relation(fields: [matchId], references: [id])
-  teacher        User          @relation("Teacher", fields: [teacherId], references: [id])
-  learner        User          @relation("Learner", fields: [learnerId], references: [id])
-  skill          Skill         @relation(fields: [skillId], references: [id])
-  reviews        Review[]
-  creditTxs      CreditTx[]
+  id                     String                  @id @default(cuid())
+  matchId                String?                 @map("match_id")
+  teacherId              String                  @map("teacher_id")
+  learnerId              String                  @map("learner_id")
+  skillId                String                  @map("skill_id")
+  startsAt               DateTime                @map("starts_at")
+  durationMin            Int                     @default(60) @map("duration_min")
+  mode                   Mode
+  meetingUrl             String?                 @map("meeting_url")
+  location               String?
+  status                 SessionStatus           @default(PROPOSED)
+  reminderSentAt         DateTime?               @map("reminder_sent_at")
+  // Added after the doc schema: who proposed (only the other person may confirm),
+  // and a marker so the no-show cron prompts a session only once.
+  proposedById           String?                 @map("proposed_by_id")
+  resolutionPromptSentAt DateTime?               @map("resolution_prompt_sent_at")
+  createdAt              DateTime                @default(now()) @map("created_at")
+  match                  Match?                  @relation(fields: [matchId], references: [id])
+  teacher                User                    @relation("Teacher", fields: [teacherId], references: [id])
+  learner                User                    @relation("Learner", fields: [learnerId], references: [id])
+  proposedBy             User?                   @relation("Proposer", fields: [proposedById], references: [id])
+  skill                  Skill                   @relation(fields: [skillId], references: [id])
+  reviews                Review[]
+  creditTxs              CreditTx[]
   // Generated column (see the extras migration). Exclusion constraints also live in raw SQL.
-  slot           Unsupported("tsrange")? @default(dbgenerated("tsrange(starts_at, (starts_at + ((duration_min)::double precision * '00:01:00'::interval)))"))
+  slot                   Unsupported("tsrange")? @default(dbgenerated("tsrange(starts_at, (starts_at + ((duration_min)::double precision * '00:01:00'::interval)))"))
 
   @@index([teacherId, startsAt])
   @@index([learnerId, startsAt])
@@ -293,7 +305,7 @@ model Review {
   sessionId  String   @map("session_id")
   reviewerId String   @map("reviewer_id")
   revieweeId String   @map("reviewee_id")
-  rating     Int      // 1-5
+  rating     Int // 1-5
   comment    String?
   createdAt  DateTime @default(now()) @map("created_at")
   session    Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
@@ -308,12 +320,13 @@ model CreditTx {
   id        String   @id @default(cuid())
   userId    String   @map("user_id")
   amount    Int
-  reason    String   // TAUGHT_SESSION | LEARNED_SESSION | SIGNUP_BONUS
+  reason    String // TAUGHT_SESSION | LEARNED_SESSION | SIGNUP_BONUS
   sessionId String?  @map("session_id")
   createdAt DateTime @default(now()) @map("created_at")
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   session   Session? @relation(fields: [sessionId], references: [id])
 
+  @@unique([userId, sessionId, reason])
   @@index([userId, createdAt])
   @@map("credit_tx")
 }

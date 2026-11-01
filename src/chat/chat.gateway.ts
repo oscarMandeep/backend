@@ -13,11 +13,16 @@ import {
 } from '@nestjs/websockets';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
-import { Events, type MatchCreatedEvent } from '../common/events';
+import {
+  Events,
+  type MatchCreatedEvent,
+  type SessionEvent,
+} from '../common/events';
 import { RateLimiter } from '../common/utils/rate-limiter';
 import type { Env } from '../config/env.schema';
 import { MatchStatus } from '../generated/prisma/client';
 import { MatchesService } from '../matches/matches.service';
+import { SessionsService } from '../sessions/sessions.service';
 import { ChatService } from './chat.service';
 import {
   ChatReadDto,
@@ -67,6 +72,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection {
     private readonly config: ConfigService<Env, true>,
     private readonly matches: MatchesService,
     private readonly chat: ChatService,
+    private readonly sessions: SessionsService,
   ) {}
 
   /**
@@ -235,6 +241,32 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection {
     } catch (err) {
       this.logger.error(
         `match:new failed for ${event.matchId}: ${String(err)}`,
+      );
+    }
+  }
+
+  /** A session changed: each participant gets it as THEY see it (their own review, etc.). */
+  @OnEvent(Events.SessionProposed)
+  onSessionProposed(event: SessionEvent): Promise<void> {
+    return this.pushSession(event);
+  }
+
+  @OnEvent(Events.SessionUpdated)
+  onSessionUpdated(event: SessionEvent): Promise<void> {
+    return this.pushSession(event);
+  }
+
+  private async pushSession(event: SessionEvent): Promise<void> {
+    try {
+      for (const userId of event.userIds) {
+        const payload = await this.sessions.getFor(event.sessionId, userId);
+        this.server
+          .to(userRoom(userId))
+          .emit(ServerEvents.SessionUpdate, payload);
+      }
+    } catch (err) {
+      this.logger.error(
+        `session:update failed for ${event.sessionId}: ${String(err)}`,
       );
     }
   }
