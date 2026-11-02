@@ -11,6 +11,7 @@ time credits. A **swap chain** finder links A → B → C → A loops when no di
 | **Web repo (Vercel)** | https://github.com/oscarMandeep/Frontend |
 | **Live site** | https://swapskill-dusky.vercel.app |
 | **Database (Neon)** | Postgres 18, project `skillswap`, AWS Singapore |
+| **Database diagram** | https://dbdiagram.io/d/6ae31503aac330141054ea2c |
 
 Stack: NestJS 11, TypeScript strict, Prisma 7, PostgreSQL (`pgvector`, `pg_trgm`, `btree_gist`), Socket.io.
 
